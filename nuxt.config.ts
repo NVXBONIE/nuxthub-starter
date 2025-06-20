@@ -1,15 +1,14 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import tailwindcss from '@tailwindcss/vite'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-04-25',
-  // Nuxt 4 directory structure and features
-  // https://nuxt.com/docs/getting-started/upgrade#testing-nuxt-4
   future: { compatibilityVersion: 4 },
-  // Nuxt Modules
-  // https://nuxt.com/modules
   modules: [
     '@nuxthub/core',
-    '@nuxt/eslint'
+    '@nuxt/eslint',
+    'shadcn-nuxt',
   ],
+  css: ['~/assets/css/tailwind.css'],
   hub: {
     database: true,
     kv: true,
@@ -19,10 +18,17 @@ export default defineNuxtConfig({
   },
   nitro: {
     experimental: {
-      // Enable Server API documentation within NuxtHub
       openAPI: true
     }
   },
-  // Development
+  vite: {
+    plugins: [
+      tailwindcss(),
+    ],
+  },
+  shadcn: {
+    prefix: '',
+    componentDir: './app/components/ui',
+  },
   devtools: { enabled: true },
 })
