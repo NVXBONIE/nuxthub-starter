@@ -32,7 +32,7 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: true },
   routeRules: {
-    '/tesseract': {
+    '/': {
       ssr: false,
     }
   }
