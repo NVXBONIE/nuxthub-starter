@@ -158,7 +158,7 @@
       const formData = new FormData()
       formData.append('image', selectedFile.value)
   
-      const response = await $fetch<ExtractedData>('/api/tesseract-id', {
+      const response = await $fetch<ExtractedData>('/api/ocr-id', {
         method: 'POST',
         body: formData
       })
