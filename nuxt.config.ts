@@ -31,4 +31,9 @@ export default defineNuxtConfig({
     componentDir: './app/components/ui',
   },
   devtools: { enabled: true },
+  routeRules: {
+    '/tesseract': {
+      ssr: false,
+    }
+  }
 })
