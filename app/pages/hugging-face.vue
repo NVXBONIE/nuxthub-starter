@@ -53,12 +53,12 @@
             </div>
           </div>
 
-          <!-- Process Button -->
+          <!-- Extract Button -->
           <Button
             v-if="selectedFile"
             :disabled="processing"
             class="w-full"
-            @click="processImage"
+            @click="extractData"
           >
             <div v-if="processing" class="flex items-center space-x-2">
               <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
@@ -68,15 +68,6 @@
           </Button>
         </CardContent>
       </Card>
-
-      <!-- Progress Indicator -->
-      <div v-if="processing" class="space-y-2">
-        <div class="flex justify-between text-sm">
-          <span>{{ $t('progress.processingImage') }}</span>
-          <span>{{ progressText }}</span>
-        </div>
-        <Progress :model-value="progressValue" />
-      </div>
 
       <!-- Error Display -->
       <Alert v-if="error" variant="destructive">
@@ -100,7 +91,6 @@
 </template>
 
 <script setup lang="ts">
-import { createWorker } from 'tesseract.js';
 import { useI18n } from 'vue-i18n';
 
 const { t: $t } = useI18n({ useScope: 'local' })
@@ -124,8 +114,6 @@ const error = ref<string | null>(null)
 const extractedData = ref<ExtractedData | null>(null)
 const fileDropZone = ref()
 const imageUrl = ref<string>('')
-const progressValue = ref(0)
-const progressText = ref('')
 
 const handleFilesSelected = (files: File[]) => {
   if (files.length === 0) return
@@ -141,57 +129,30 @@ const handleFilesSelected = (files: File[]) => {
   selectedFile.value = file
   error.value = null
   extractedData.value = null
-  progressValue.value = 0
 }
 
-const processImage = async () => {
+const extractData = async () => {
   if (!selectedFile.value) return
 
   try {
     processing.value = true
     error.value = null
-    progressValue.value = 10
-    progressText.value = $t('progress.initializingOcr')
-    
-    // Step 1: Extract text using Tesseract OCR
-    const worker = await createWorker('eng+ron+fra');
-    progressValue.value = 30
-    progressText.value = $t('progress.processingWithOcr')
-    
-    const ret = await worker.recognize(imageUrl.value);
-    const ocrText = ret.data.text;
-    console.log('OCR Text:', ocrText);
-    await worker.terminate();
 
-    progressValue.value = 60
-    progressText.value = $t('progress.extractingStructuredData')
+    const formData = new FormData()
+    formData.append('image', selectedFile.value)
 
-    // Step 2: Send OCR text to API for structured extraction
-    const response = await $fetch('/api/tesseract-id', {
+    const response = await $fetch<ExtractedData>('/api/extract-hugging-face', {
       method: 'POST',
-      body: {
-        text: ocrText
-      }
-    });
+      body: formData
+    })
 
     console.log('API Response:', response);
     extractedData.value = response;
-    
-    progressValue.value = 100
-    progressText.value = $t('progress.complete')
-    
-    // Reset progress after a short delay
-    setTimeout(() => {
-      progressValue.value = 0
-      progressText.value = ''
-    }, 1000)
     
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : $t('errors.failedToProcess');
     error.value = errorMessage;
     console.error('Processing error:', err);
-    progressValue.value = 0
-    progressText.value = ''
   } finally {
     processing.value = false
   }
@@ -205,8 +166,6 @@ const resetForm = () => {
     fileDropZone.value.reset()
   }
   error.value = null
-  progressValue.value = 0
-  progressText.value = ''
 }
 
 const saveData = () => {
@@ -220,8 +179,6 @@ const removeImage = () => {
   selectedFile.value = null
   extractedData.value = null
   error.value = null
-  progressValue.value = 0
-  progressText.value = ''
   if (fileDropZone.value) {
     fileDropZone.value.reset()
   }
@@ -247,13 +204,6 @@ const removeImage = () => {
       "processing": "Se procesează...",
       "extractInformation": "Extrage informațiile"
     },
-    "progress": {
-      "processingImage": "Se procesează imaginea...",
-      "initializingOcr": "Se inițializează OCR...",
-      "processingWithOcr": "Se procesează imaginea cu OCR...",
-      "extractingStructuredData": "Se extrag datele structurate...",
-      "complete": "Complet!"
-    },
     "actions": {
       "savingData": "Salvare date"
     },
@@ -278,13 +228,6 @@ const removeImage = () => {
     "processing": {
       "processing": "Processing...",
       "extractInformation": "Extract Information"
-    },
-    "progress": {
-      "processingImage": "Processing image...",
-      "initializingOcr": "Initializing OCR...",
-      "processingWithOcr": "Processing image with OCR...",
-      "extractingStructuredData": "Extracting structured data...",
-      "complete": "Complete!"
     },
     "actions": {
       "savingData": "Save Data"
